@@ -2,7 +2,6 @@ package com.reddy.demo.ui.main
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
@@ -88,22 +87,15 @@ class MainFragment : Fragment() {
                 .setTargetRotation(rotation)
                 .build()
 
-//        viewModel.sourceText.observe(viewLifecycleOwner, Observer { srcText.text = it })
-//        viewModel.imageCropPercentages.observe(viewLifecycleOwner,
-//                Observer { drawOverlay(overlay.holder, it.first, it.second) })
-
         val cameraSelector =
                 CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
 
         try {
-            // Unbind use cases before rebinding
             cameraProvider.unbindAll()
-
-            // Bind use cases to camera
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
             preview.setSurfaceProvider(previewView.createSurfaceProvider())
-        } catch (exc: IllegalStateException) {
-            Log.e(TAG, "Use case binding failed. This must be running on main thread.", exc)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Thread problem $e")
         }
     }
 
