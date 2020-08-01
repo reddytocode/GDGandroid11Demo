@@ -17,6 +17,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import com.reddy.demo.R
+import com.reddy.demo.analyzer.LuminosityAnalyzer
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -24,6 +25,8 @@ import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
+typealias LumaListener = (luma: Double) -> Unit
+
 
 class MainFragment : Fragment() {
     private val viewModel: MainViewModel by viewModels()
@@ -32,7 +35,7 @@ class MainFragment : Fragment() {
     private var camera: Camera? = null
     private lateinit var container: ConstraintLayout
     private lateinit var previewView: PreviewView
-
+    private var imageAnalyzer: ImageAnalysis? = null
     private lateinit var cameraExecutor: ExecutorService
 
 
@@ -86,13 +89,21 @@ class MainFragment : Fragment() {
                 .setTargetAspectRatio(screenAspectRatio)
                 .setTargetRotation(rotation)
                 .build()
+        imageAnalyzer = ImageAnalysis.Builder()
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
+                        Log.d(TAG, "Average luminosity: $luma")
+                    })
+                }
 
         val cameraSelector =
                 CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
 
         try {
             cameraProvider.unbindAll()
-            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer
+            )
             preview.setSurfaceProvider(previewView.createSurfaceProvider())
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Thread problem $e")
